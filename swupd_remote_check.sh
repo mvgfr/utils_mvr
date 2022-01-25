@@ -13,13 +13,27 @@
 
 # notes:
 # - minimal safety checking; be careful since this execs code on remote
+# - TBD: see those refs inline
 
-# quick safety check; must be single param only:
+# History:
+# 20220125 mvr: handle a few more errs (& avoid mail)
+# 20220121 mvr: if ping fails, notify (vs. stderr - which results in email :/)
+# 20220117 mvr: incep
+
+## functions:
+doNotify()
+# args (BOTH must be double-quote safe): $1: title of notification ; $2 (optional): body
+{
+    osascript -e "display notification \"$2\" with title \"$1\""
+}
+
+## execution begins here:
+
+# quick safety check; must be single arg only:
 if [ $# -ne 1 ] ; then
-    echo 'single param (host) required; bailing' >&2
+    echo 'single arg (host) required; bailing' >&2
     exit 1
 fi
-theHost=$1
 
 # quick safety checks of param passed in:
 hasSpace=$(echo X"$1"X | grep -c ' ')
@@ -29,15 +43,18 @@ if [ $anyFlags -gt 0 ] ; then
     echo 'invalid host; bailing' >&2
     exit 1
 fi
+
+theHost=$1
 # see if host exits (with a less risky cmd than ssh):
-/sbin/ping -c1 "$1" >/dev/null 2>&1
+/sbin/ping -c1 "$theHost" >/dev/null 2>&1
 if [ $? -ne 0 ] ; then
-    echo 'ping of remote host' \""$1"\" 'failed; bailing' >&2
-    exit 1
+    doNotify "$theHost: ping failed..." '(attempting to check for swupd)'
+    exit
 fi
 
-potOut=$(ssh "$1" 'softwareupdate --list 2>&1')
+potOut=$(ssh "$theHost" 'softwareupdate --list 2>&1' 2>&1)
 noNew=$(echo "$potOut" | grep -c 'No new software available')
 if [ $noNew -eq 0 ] ; then
-    osascript -e "display notification \"$theMsg\" with title \"$1: swupd avail\""
+    # NB: wil apparently only display 1st 2 lines of $theMsg, so TBD to do something about that
+    doNotify "$theHost: swupd avail" "$potOut"
 fi
