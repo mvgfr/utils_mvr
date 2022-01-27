@@ -55,6 +55,7 @@ fi
 potOut=$(ssh "$theHost" 'softwareupdate --list 2>&1' 2>&1)
 noNew=$(echo "$potOut" | grep -c 'No new software available')
 if [ $noNew -eq 0 ] ; then
-    # NB: wil apparently only display 1st 2 lines of $theMsg, so TBD to do something about that
-    doNotify "$theHost: swupd avail" "$potOut"
+    # notification will be elided automatically, if over X bytes, so try to choose most salient part:
+    potOut2=$(echo "$potOut" | sed -n -e '/ Label: /,$p')
+    doNotify "$theHost: swupd avail" "$potOut2"
 fi
