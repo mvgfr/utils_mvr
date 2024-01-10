@@ -16,9 +16,15 @@
 # - TBD: see those refs inline
 
 # History:
+
+# 20240110 mvr: add timestamp to notifications
 # 20220125 mvr: handle a few more errs (& avoid mail)
 # 20220121 mvr: if ping fails, notify (vs. stderr - which results in email :/)
 # 20220117 mvr: incep
+
+
+LF=$'\n'
+NOW_HR=$(date +%Y-%m-%d\ %H:%M:%S) # human-readable timestamp
 
 ## functions:
 doNotify()
@@ -26,6 +32,7 @@ doNotify()
 {
     osascript -e "display notification \"$2\" with title \"$1\""
 }
+
 
 ## execution begins here:
 
@@ -57,5 +64,5 @@ noNew=$(echo "$potOut" | grep -c 'No new software available')
 if [ $noNew -eq 0 ] ; then
     # notification will be elided automatically, if over X bytes, so try to choose most salient part:
     potOut2=$(echo "$potOut" | sed -n -e '/ Label: /,$p')
-    doNotify "$theHost: swupd avail" "$potOut2"
+    doNotify "$theHost: swupd avail" "$NOW_HR${LF}$potOut2"
 fi
