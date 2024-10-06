@@ -17,6 +17,7 @@
 
 # History:
 
+# 20241006 mvr: add exceptions (fixed & case-sensitive); one per line, in $exceptionsFile
 # 20240110 mvr: add timestamp to notifications
 # 20220125 mvr: handle a few more errs (& avoid mail)
 # 20220121 mvr: if ping fails, notify (vs. stderr - which results in email :/)
@@ -25,6 +26,7 @@
 
 LF=$'\n'
 NOW_HR=$(date +%Y-%m-%d\ %H:%M:%S) # human-readable timestamp
+exceptionsFile=~/utils/swupd_remote_check_execptions
 
 ## functions:
 doNotify()
@@ -62,7 +64,18 @@ fi
 potOut=$(ssh "$theHost" 'softwareupdate --list 2>&1' 2>&1)
 noNew=$(echo "$potOut" | grep -c 'No new software available')
 if [ $noNew -eq 0 ] ; then
-    # notification will be elided automatically, if over X bytes, so try to choose most salient part:
-    potOut2=$(echo "$potOut" | sed -n -e '/ Label: /,$p')
+    # filter down to Labels only:
+    outFiltered=$(echo "$potOut" | fgrep 'Label: ')
+    # filter OUT any exceptions:
+    if [ -f "$exceptionsFile" ] ; then
+        IFS=$'\n' read -d '' -r -a theExceptionsList < "$exceptionsFile"
+        exceptionsCount=${#theExceptionsList[@]}
+        if [ $exceptionsCount -gt 0 ] ; then
+            for i in seq 0 $(( $exceptionsCount - 1 )) ; do
+                outFiltered=$(echo "$outFiltered" | fgrep -v "${theExceptionsList[$i]}")
+            done
+        fi
+    fi
+    potOut2=$outFiltered
     doNotify "$theHost: swupd avail" "$NOW_HR${LF}$potOut2"
 fi
