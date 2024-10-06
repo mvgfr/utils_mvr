@@ -71,7 +71,7 @@ if [ $noNew -eq 0 ] ; then
         IFS=$'\n' read -d '' -r -a theExceptionsList < "$exceptionsFile"
         exceptionsCount=${#theExceptionsList[@]}
         if [ $exceptionsCount -gt 0 ] ; then
-            for i in seq 0 $(( $exceptionsCount - 1 )) ; do
+            for i in $(seq 0 $(( $exceptionsCount - 1 )) ) ; do
                 outFiltered=$(echo "$outFiltered" | fgrep -v "${theExceptionsList[$i]}")
             done
         fi
