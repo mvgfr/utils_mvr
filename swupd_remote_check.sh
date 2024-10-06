@@ -76,6 +76,7 @@ if [ $noNew -eq 0 ] ; then
             done
         fi
     fi
-    potOut2=$outFiltered
-    doNotify "$theHost: swupd avail" "$NOW_HR${LF}$potOut2"
+    if [ ${#outFiltered} -gt 0 ] ; then
+	doNotify "$theHost: swupd avail" "$NOW_HR${LF}$outFiltered"
+    fi
 fi
